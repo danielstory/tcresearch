@@ -177,7 +177,7 @@ var version_dictionary = {
 			"light": ["air", "fire"],
 			"weather": ["air", "cold"],
 			"motion": ["air", "water"],
-			"cold": ["water, "order"],
+			"cold": ["water", "order"],
 			"crystal": ["stone", "water"],
 			"life": ["water", "earth"],
 			"poison": ["water", "death"],
