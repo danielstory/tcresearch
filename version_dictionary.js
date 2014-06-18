@@ -163,7 +163,7 @@ var version_dictionary = {
 			"trap": ["motion", "entropy"]
 		}
 	},
-	"4.1.0g":{
+	"4.1.1.14a":{
 		"base_aspects":[
 		"air",
 		"earth",
