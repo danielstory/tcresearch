@@ -51,7 +51,7 @@ $(function(){
 	};
 
 	var isEmptyAspectRow = function(row) {
-		var result = row.find("input").filter(function() {
+		var result = row.find("input.aspect").filter(function() {
 				return $(this).val() != "";
 			}).length == 0;
 
@@ -66,10 +66,11 @@ $(function(){
 	var rowTemplate = $("tr.aspect.path").first().clone();
 	var autocompleteParams = {
 		source: completionList,
-		autoFocus: true
+		autoFocus: true,
+		delay: 0
 	};
 
-	$("#aspectselection").on("keyup blur", "tr.aspect.first input", null, function(event, data) {
+	$("#aspectselection").on("keypress blur", "tr.aspect.first input", null, function(event) {
 		if (!isValidAspect($(this).val())) {
 			$(this).closest("tr").addClass("error");
 		} else {
@@ -78,24 +79,21 @@ $(function(){
 		run();
 	});
 
-	var validateRows = function(event, data) {
-		var row = $(this).closest("tr");
+	var validateRows = function(event) {
+		run();
+	};
+
+	var changeRows = function(event) {
+		var row = $(event.target).closest("tr");
 		if (validateAspectRow(row)) {
 			if (!isEmptyAspectRow(row) && isLastAspectRow(row)) {
 				rowTemplate
 					.clone()
 					.insertAfter(row)
 					.find("input.aspect")
-					.autocomplete(autocompleteParams)
-					.focus();
+					.autocomplete(autocompleteParams);
 			} 
 		}
-
-		run();
-	};
-
-	var validateAndChangeRows = function(event, data) {
-		validateRows(event, data);
 
 		var extraRows = $("#aspectselection")
 			.find("tr.aspect.path")
@@ -111,8 +109,15 @@ $(function(){
 		extraRows.remove();
  	};
 	
-	$("#aspectselection").on("blur", "tr.aspect.path input", null, validateAndChangeRows);
+	
 	$("#aspectselection").on("keyup", "tr.aspect.path input", null, validateRows);
+	$("#aspectselection").on("keydown", "tr.aspect.path input", null, function(event) {
+		if (event.which == 27) { // Esc key clears all inputs
+			clearAll();
+		} else {
+			changeRows(event);
+		}
+	} );
 
 	$("#aspectselection input.aspect").autocomplete(autocompleteParams);
 
@@ -196,12 +201,16 @@ $(function(){
 
 	var clearAll = function() {
 		$("#aspectselection tr.aspect.path") 
-			.first()
-			.siblings("tr.aspect.path")
 			.remove();
 		$("input.aspect, input.path").val("");
-		$("#aspectselection tr.aspect.first input").focus();
+		rowTemplate
+			.clone()
+			.insertAfter($("#aspectselection tr.aspect.first"))
+			.find("input.aspect")
+			.autocomplete(autocompleteParams);
+
 		$("#results").empty();
+		$("#aspectselection tr.aspect.first input").focus();
 	};
 
 	check = document.getElementById("available");
@@ -354,7 +363,7 @@ $(function(){
 						node.first().addClass("waypoint");
 					}
 					node.first().data({ aspect: e });
-					node.first().click(function(event, self) {
+					node.first().click(function(event) {
 							toggle($("#" + $(this).data().aspect));
 							run();
 						});
@@ -378,4 +387,8 @@ $(function(){
 		var el = $("#" + aspect);
 		return (el.hasClass("unavail")) ? 100 : 1;
 	}
+
+	$(document).ready(function() {
+		$("#aspectselection tr.first input.aspect").focus();
+	});
 });

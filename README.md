@@ -19,6 +19,6 @@ may cause the path to grow longer.) If no path can be found without using disabl
 script will try to find the shortest path using the fewest disabled aspects.
 
 This work is based on [ythri's](https://github.com/ythri/tcresearch/) original code with 
-[vesicavino's](https://github.com/Vesicavinco/tcresearch) modifications, and like the originals, 
+[Vesicavinco's](https://github.com/Vesicavinco/tcresearch) modifications, and like the originals, 
 is licensed under a [Creative Commons Attribution 4.0 License](http://creativecommons.org/licenses/by/4.0/). 
 Sources can be found in the [GitHub repository](https://github.com/danielstory/tcresearch).
