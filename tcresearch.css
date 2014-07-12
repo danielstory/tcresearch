@@ -29,6 +29,27 @@
 #avail > li {
 	width:25%;
 }
+tr.error {
+	background-color: #FF6666;
+}
+tr.empty input {
+	background-color: #EEE;
+}
+li.waypoint {
+	background-color: #CFF;
+}
+#help {
+	max-width: 700px;
+}
+#results {
+	float: right;
+	list-style-type: none;
+	min-width: 200px;
+	max-width: 400px;
+}
+#results.error {
+	background-color: #FF6666;
+}
 .aspectlist > li img {
 	vertical-align:middle;
 	float:left;
@@ -51,7 +72,7 @@
 #avail > li.unavail:hover {
 	background:#e8e8e8;
 }
-#close_results {
+#clear_all {
 	float:right;
 }
 .result > li {

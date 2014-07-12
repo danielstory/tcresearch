@@ -1,14 +1,121 @@
 $(function(){
 	var latest_version = "4.1.1.14";
+	var preferred_version = "4.1.0g";
 	$.each(version_dictionary, function(key,version){
 		$("#version").append("<option value="+key+">"+key+"</option>");
 	});
+	var reverseTranslate = (function() {
+		// Create reverse-lookup translation table.
+		var aspects = {};
+		for (var aspect in translate) {
+			aspects[translate[aspect]] = aspect;
+		}
+		return aspects;
+	})();
+	var completionList = (function() {
+		var aspects = [];
+		for (var aspect in reverseTranslate) {
+			aspects.push({ label: aspect + " [" + reverseTranslate[aspect] + "]", value: aspect });
+		}
+		return aspects;
+	})();
 	var aspects = [];
 	var addon_aspects;
 	var combinations = {};
-	$("#version").val(latest_version);
-	var version=latest_version;
+	$("#version").val(preferred_version);
+	var version=preferred_version;
 	graph = {};
+
+	var isValidAspect = function(aspect) {
+		return translate[aspect] || reverseTranslate[aspect];
+	};
+
+	var validateAspectRow = function(row) {
+		var aspect = $(row).find("input.aspect").val();
+		var path = $(row).find("input.path").val();
+		var validAspect = isValidAspect(aspect);
+		var number = path != "" && !Number.isNaN(path);
+		var last = isLastAspectRow(row);
+		var empty = isEmptyAspectRow(row);
+		var result = (validAspect && (typeof path === undefined || number)) || (last && empty);
+		if (result) {
+			row.removeClass("error");
+		} else {
+			row.addClass("error");
+		}
+		return result;
+	};
+
+	var isLastAspectRow = function(row) {
+		return row.next("tr.aspect.path").length == 0;
+	};
+
+	var isEmptyAspectRow = function(row) {
+		var result = row.find("input").filter(function() {
+				return $(this).val() != "";
+			}).length == 0;
+
+		if (result) {
+			$(row).addClass("empty");
+		} else {
+			$(row).removeClass("empty");
+		}
+		return result;
+	};
+
+	var rowTemplate = $("tr.aspect.path").first().clone();
+	var autocompleteParams = {
+		source: completionList,
+		autoFocus: true
+	};
+
+	$("#aspectselection").on("keyup blur", "tr.aspect.first input", null, function(event, data) {
+		if (!isValidAspect($(this).val())) {
+			$(this).closest("tr").addClass("error");
+		} else {
+			$(this).closest("tr").removeClass("error");
+		}
+		run();
+	});
+
+	var validateRows = function(event, data) {
+		var row = $(this).closest("tr");
+		if (validateAspectRow(row)) {
+			if (!isEmptyAspectRow(row) && isLastAspectRow(row)) {
+				rowTemplate
+					.clone()
+					.insertAfter(row)
+					.find("input.aspect")
+					.autocomplete(autocompleteParams)
+					.focus();
+			} 
+		}
+
+		run();
+	};
+
+	var validateAndChangeRows = function(event, data) {
+		validateRows(event, data);
+
+		var extraRows = $("#aspectselection")
+			.find("tr.aspect.path")
+			.filter(function() {
+				var empty = isEmptyAspectRow($(this));
+				var last = isLastAspectRow($(this));
+				var prevEmpty = $(this).prev("tr").is(function() {
+						return isEmptyAspectRow($(this)) && $(this).hasClass("path");
+					});
+				return empty && last && prevEmpty;
+			});
+
+		extraRows.remove();
+ 	};
+	
+	$("#aspectselection").on("blur", "tr.aspect.path input", null, validateAndChangeRows);
+	$("#aspectselection").on("keyup", "tr.aspect.path input", null, validateRows);
+
+	$("#aspectselection input.aspect").autocomplete(autocompleteParams);
+
 	function connect(aspect1, aspect2) {
 		function addConnection(from, to) {
 			if (!(from in graph)) graph[from] = [];
@@ -23,7 +130,9 @@ $(function(){
 	function ddDataSort(a, b) {
 		return (a.text == b.text) ? 0 : (a.text<b.text) ? -1 : 1;
 	}
-	function find(from, to, steps) {
+	function solve(from, to, steps) {
+		if (!from || !to || !steps) throw "Invalid parameters."
+
 		function search(queue, to, visited) {
 			while (!queue.isEmpty()) {
 				var element = queue.dequeue();
@@ -85,8 +194,16 @@ $(function(){
 		return option;
 	}
 
-	fromSel = document.getElementById("fromSel");
-	toSel = document.getElementById("toSel");
+	var clearAll = function() {
+		$("#aspectselection tr.aspect.path") 
+			.first()
+			.siblings("tr.aspect.path")
+			.remove();
+		$("input.aspect, input.path").val("");
+		$("#aspectselection tr.aspect.first input").focus();
+		$("#results").empty();
+	};
+
 	check = document.getElementById("available");
 	steps = $("#spinner").spinner({
 		min: 1,
@@ -128,11 +245,13 @@ $(function(){
 	});
 	$("#version").change(function(){
 		version = $("#version").val();
-		$(".result").dialog("close");
+		$("#results").empty();
+		clearAll();
 		reset_aspects();
 	});
 	$(".aspectlist").on( "click", ".aspect", function(){
 		toggle(this);
+		run();
 	});
 	$(".aspectlist").on("mouseenter", ".aspect", function() {
 		var aspect = $(this).attr("id");
@@ -151,9 +270,7 @@ $(function(){
 	$(".aspectlist").on("mouseleave", ".aspect", function() {
 		$("#combination_box").hide();
 	});
-	$("#close_results").click(function(){
-		$(".result").dialog("close");
-	});
+	$("#clear_all").click(clearAll);
 	
 	function reset_aspects() {
 		aspects = $.extend([], version_dictionary[version]["base_aspects"]);
@@ -195,38 +312,58 @@ $(function(){
 			connect(compound, combinations[compound][0]);
 			connect(compound, combinations[compound][1]);
 		}
+		run();
 	}
 	function run() {
-		var fromSel = $('#fromSel').data('ddslick').selectedData.value;
-		var toSel = $('#toSel').data('ddslick').selectedData.value;
-		var path = find(fromSel, toSel, steps.spinner("value"));
-		var id = fromSel+'to'+toSel;
-		var title = translate[fromSel]+' &rarr; '+translate[toSel];
+		var aspectRows = $("#aspectselection").find("tr.aspect");
+		if (aspectRows.not(function() { return isEmptyAspectRow($(this)); }).length < 2 
+			|| aspectRows.not(function() { return validateAspectRow($(this)); }).length > 0)
+		{
+			$("#results").empty();
+			return;
+		}
+
+		var waypoints = [];
+		$("#aspectselection input.aspect").not(function() { return !$(this).val(); }).each(function() {
+			waypoints.push({ aspect: $(this).val(), steps: Number($(this).closest("tr").find("input.path").val()) });
+		});
+
+		$("#results").empty();
+
 		var step_count=0;
 		var aspect_count={};
+
 		$.each(aspects, function(aspect, value){
 			aspect_count[value]=0;
 		});
-		$('#'+id).remove();
-		$("body").append('<ul id="'+id+'" class="aspectlist result" title="'+title+'"></ul>');
-		$('#'+id).dialog({
-			autoOpen: false,
-			modal: false,
-			resizable:false,
-			width: 200
-		});
-		$('#'+id).append("<div></div>");
-		var loop_count=0;
-		path.forEach(function(e) {
-			loop_count++;
-			if(loop_count!=1&&loop_count!=path.length) {
-				aspect_count[e]++;
-				step_count++;
-			}
-			$('#'+id).append('<li class="aspect_result"><img src="aspects/color/' + translate[e] + '.png" /><div>' + translate[e] + '</div><div class="desc">' + e + '</div></li><li>↓</li>');
-		});
-		$('#'+id).children().last().remove();
-		$('#'+id).append('<li id="aspects_used">Aspects Used</li>');
+			
+		for (var waypointIndex = 0; waypointIndex+1 < waypoints.length; ++waypointIndex) {
+			var fromSel = reverseTranslate[waypoints[waypointIndex].aspect];
+			var toSel = reverseTranslate[waypoints[waypointIndex+1].aspect];
+			var path = solve(fromSel, toSel, waypoints[waypointIndex+1].steps);
+
+			var loop_count=0;
+			path.forEach(function(e) {
+				if (++loop_count != 1 || waypointIndex == 0) {
+					if(loop_count != 1 && loop_count != path.length) {
+						++aspect_count[e];
+						++step_count;
+					}
+					var node = $('<li class="aspect_result"><img src="aspects/color/' + translate[e] + '.png" /><div>' + translate[e] + '</div><div class="desc">' + e + '</div></li><li>↓</li>');
+					if (loop_count == 1 || loop_count == path.length) {
+						node.first().addClass("waypoint");
+					}
+					node.first().data({ aspect: e });
+					node.first().click(function(event, self) {
+							toggle($("#" + $(this).data().aspect));
+							run();
+						});
+					node.appendTo($("#results"));
+				}
+			});
+		}
+		$("#results").children().last().remove();
+		$("#results").append('<li id="aspects_used">Aspects Used</li>');
 		var used = '<ul id="aspects_used_list">';
 		$.each(aspect_count, function(aspect, value){
 			if(value>0) {
@@ -235,8 +372,7 @@ $(function(){
 		});
 		used = $(used).append("<div>Total Steps: "+ step_count+"</div>");
 		used = $(used).append('</ul>');
-		$('#'+id).append(used);
-		$('#'+id).dialog("open");
+		$("#results").append(used);
 	}
 	function getWeight(aspect) {
 		var el = $("#" + aspect);

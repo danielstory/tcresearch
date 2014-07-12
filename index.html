@@ -17,7 +17,8 @@
 <body>
 	<h2>Thaumcraft 4.1 Research Helper</h2>
 	<div id="combination_box"><div id="left"></div><span class="operator">+</span><div id="right"></div><span class="operator">=</span><div id="equals"></div></div>
-	<table>
+	<div id="resultsContainer"><ul id="results" class="result"></ul></div>
+	<table id="aspectselection">
 		<tr>
 			<td>Version:</td>
 			<td>
@@ -25,17 +26,18 @@
 				</select>
 			</td>
 		</tr>
-		<tr><td>From:</td><td><div id="fromSel"></div></td></tr>
-		<tr><td>To:</td><td><div id="toSel"></div></td></tr>
-		<tr><td>Min. Steps:</td><td><input id="spinner" name="value" value="1" style="width:140px" /></td></tr>
-		<tr><td></td><td><input id="find_connection" type="button" value="Find Connection" /><input id="close_results" type="button" value="Close all results" /></td></tr>
-		<tr><td>Addons:</td><td id="addons"></td></tr> 
-		<tr><td>Available<br/>Aspects:</td><td><input type="button" id="sel_all" value="Select All Aspects"><input type="button" id="desel_all" value="Deselect All Aspects"><ul id="avail" class="aspectlist"></ul></td></tr>
+		<tr class="aspect first"><td>From:</td><td colspan="3"><input class="aspect" /></td></tr>
+		<tr class="aspect path empty"><td>To:</td><td><input class="aspect" /></td><td>Min steps:</td><td><input class="path" value="1" /></td></tr>
+		<tr><td></td><td colspan="3"><input id="find_connection" type="submit" value="Find Connection" /><input id="clear_all" type="button" value="Clear All" /></td></tr>
+		<tr><td>Addons:</td><td id="addons" colspan="3"></td></tr> 
+		<tr><td>Available<br/>Aspects:</td><td colspan="3"><input type="button" id="sel_all" value="Select All Aspects"><input type="button" id="desel_all" value="Deselect All Aspects"><ul id="avail" class="aspectlist"></ul></td></tr>
 	</table>
 
-	<h3 style="margin-top:100px">Help</h3>
-	<p>This script helps you with your Thaumcraft 4.1 research. If you have a research note with two aspects that you don't know how to connect, simply choose them in the dropdown list above (<strong>From:</strong> and <strong>To:</strong>). Additionally, choose the minimum number of steps between those two aspects. If in your research note, the two aspects have two blank spaces between them, choose the value 2 for <strong>Min. Steps</strong>. Then click <strong>Find Connection</strong> and the script will search for the shortest path (well, with at least the minimum length) that connects the two aspects. Note that sometimes the length of any path is longer then the given minimum, but this should not be a problem for your research note.</p>
-	<p>If you are unhappy with the path you got, because you do not have access to those aspects yet or they are quite rare, simply disable those aspects from <strong>Available Aspects:</strong>. The script will then try to find paths without these. Note that this may cause the path to grow longer. If too many aspects are disabled and there are no paths left without any of those, the script will try to find the shortest path using the minimal number of disabled aspects.</p>
-	<p style="size:small;color:#666;margin-top:50px;">This work is licensed under a <a href="http://creativecommons.org/licenses/by/4.0/" style="color:#55a;">Creative Commons Attribution 4.0 License</a>. Sources can be found in the <a href="https://github.com/ythri/tcresearch/tree/gh-pages" style="color:#55a;">github repository</a>.</p>
+	<div id="help">
+		<h3 style="margin-top:100px">Help</h3>
+		<p>This script helps you with your Thaumcraft 4.1 research. If you have a research note with two aspects that you don't know how to connect, simply enter them in the boxes above (<strong>From:</strong> and <strong>To:</strong>). Additionally, choose the minimum number of steps between those two aspects. If in your research note, the two aspects have two blank spaces between them, choose the value 2 for <strong>Min. Steps</strong>. As each line is completed, additional lines will become available to extend the path. The script will search for the shortest path (with at least the specified minimum length) that connects the two aspects. Note that sometimes the shortest possible path is longer than the given minimum.</p>
+		<p>If you are unhappy with the path you got, because you do not have access to those aspects yet or they are quite rare, simply disable those aspects by clicking on them in the <strong>Available Aspects</strong> or the result path. The script will then try to find alternative paths. (Note that this may cause the path to grow longer.) If no path can be found without using disabled aspects, the script will try to find the shortest path using the fewest disabled aspects.</p>
+		<p style="size:small;color:#666;margin-top:50px;">This work is based on <a href="https://github.com/ythri/tcresearch/">ythri's</a> original code with <a href="https://github.com/Vesicavinco/tcresearch">vesicavino's</a> modifications, and like the originals, is licensed under a <a href="http://creativecommons.org/licenses/by/4.0/" style="color:#55a;">Creative Commons Attribution 4.0 License</a>. Sources can be found in the <a href="https://github.com/danielstory/tcresearch" style="color:#55a;">GitHub repository</a>.</p>
+	</div>
 </body>
 </html>
